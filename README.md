@@ -1,96 +1,114 @@
+<div align="center">
+
 # Finance AgentX
 
-> An auditable personal-finance decision agent that evaluates whether a purchase is safe today, should be split into installments, or should wait.
+### An explainable purchase-safety agent for personal finance
 
-Finance AgentX turns a user's financial history into a transparent purchase recommendation. Instead of producing an opaque yes/no answer, it combines transaction analysis, recurring-expense detection, income estimation, a 90-day cash-flow forecast, and deterministic policy rules to explain *why* a decision was made.
+*Forecast your cash flow. Evaluate the trade-off. Make the reasoning visible.*
 
-> **Disclaimer:** This is an educational software project, not financial advice. Outputs should not be treated as investment, credit, lending, or professional financial advice.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Decisioning](https://img.shields.io/badge/Decisioning-Deterministic-1F6FEB)](#decision-engine)
+[![Forecast](https://img.shields.io/badge/Forecast-90%20days-2EA043)](#how-it-works)
+[![Status](https://img.shields.io/badge/Status-Project%20complete-8250DF)](#)
 
-## The problem
+</div>
 
-A purchase can look affordable from today's balance while still creating a cash shortfall after upcoming bills, subscriptions, repayments, or irregular income. Finance AgentX evaluates the purchase against an expected financial timeline rather than relying on a single current-balance check.
+> Finance AgentX analyses financial history and a proposed purchase to recommend whether to **pay now**, **split into installments**, or **wait**—with an auditable explanation rather than a black-box answer.
 
-Given historical financial data and a proposed purchase, the system recommends one of the following actions:
+> **Educational project only.** It does not provide investment, lending, credit, or professional financial advice.
 
-- **Pay in full** — the purchase can be made without violating the configured cash-safety threshold.
-- **Split into installments** — spreading the cost produces a safer projected cash position.
-- **Wait** — neither paying in full nor available installment options meet the safety rules.
+<div align="center">
+  <img src="assets/forecast-example.svg" alt="Illustrative 90-day cash-flow forecast comparing payment options" width="880" />
+</div>
 
-## Highlights
+## Why it exists
 
-- **90-day cash-flow forecasting** that models expected balances after income, recurring commitments, and the proposed purchase.
-- **Deterministic decision engine** that makes recommendations reproducible and inspectable.
-- **Recurring-expense detection** to account for subscriptions, bills, and other repeated transactions.
-- **Income and transaction analysis** to infer financial patterns from historical data.
-- **Installment-plan evaluation** to compare payment options against projected cash safety.
-- **Evidence extraction** from receipt images and messages through dedicated extraction modules.
-- **Validation and diagnostics** to check assumptions, data quality, and decision outputs.
-- **Auditable outputs** that preserve the reasoning behind every recommendation.
+A purchase may look affordable from today’s account balance but still cause a shortfall after rent, subscriptions, repayments, or a gap before the next income event. Finance AgentX evaluates the **future cash position**, not only the present balance.
+
+| Recommendation | When it is selected |
+|---|---|
+| **Pay in full** | A one-time payment preserves the required cash buffer throughout the forecast. |
+| **Split into installments** | Paying in full is unsafe, but an evaluated installment plan keeps the projected balance within policy. |
+| **Wait** | No evaluated payment option meets the cash-safety rules. |
+
+## What it does
+
+- Builds a **90-day balance forecast** from historical transactions and profile data.
+- Detects **recurring expenses** such as subscriptions and regular commitments.
+- Analyses income patterns and models expected cash inflows.
+- Evaluates the proposed purchase as a full payment and across installment options.
+- Uses deterministic rules to produce **reproducible, inspectable decisions**.
+- Extracts supporting context from receipt images and messages when supplied.
+- Runs validation, diagnostics, calibration, and evaluation workflows.
 
 ## How it works
 
 ```text
-Historical transactions + profile data + purchase request
-                         │
-                         ▼
-      Income / recurring-expense / evidence extraction
-                         │
-                         ▼
-             90-day balance forecast
-                         │
-                         ▼
-       Deterministic rules + installment solver
-                         │
-                         ▼
-    Pay in full • Split into installments • Wait
-             with rationale and validation
+Financial history + profile + purchase request
+                    │
+                    ▼
+  Income analysis · recurring-expense detection · evidence extraction
+                    │
+                    ▼
+             90-day cash-flow forecast
+                    │
+                    ▼
+     Deterministic policy + installment-plan solver
+                    │
+                    ▼
+      PAY IN FULL  ·  INSTALLMENTS  ·  WAIT
+             rationale + validation output
 ```
 
-The system deliberately keeps the final financial decision in a deterministic policy layer. This makes a recommendation easier to test, reproduce, calibrate, and explain than an LLM-only decision flow.
+## Decision engine
 
-## Repository structure
+The final recommendation is made by a deterministic policy layer, not by a language model. That design keeps the decision path transparent: the same inputs and configuration lead to the same output, making the system easier to test, calibrate, and audit.
+
+**Core principles**
+
+1. Forecast before deciding—current balance alone is not enough.
+2. Protect a configured cash buffer across the full forecast horizon.
+3. Compare alternatives before rejecting a purchase.
+4. Surface the evidence and rules behind every recommendation.
+5. Validate financial inputs and output constraints.
+
+## Project architecture
 
 ```text
 finance-agentx/
 ├── code/
-│   ├── main.py                # Entry point
-│   ├── data.py                # Data loading and preparation
-│   ├── income.py              # Income analysis
-│   ├── recurring.py           # Recurring-expense detection
-│   ├── forecast.py            # Cash-flow forecasting
-│   ├── decide.py              # Decision policy
-│   ├── solver.py              # Installment-option solver
-│   ├── rulefit.py             # Rule fitting/calibration support
-│   ├── validate.py            # Output validation
-│   ├── diagnose.py            # Diagnostics
-│   ├── extract_images.py      # Receipt-image extraction
-│   ├── extract_messages.py    # Message extraction
-│   └── config.py              # Configuration
-├── dataset/                   # Input datasets
-├── evaluation/                # Evaluation assets
-├── output.csv                 # Generated output example
-├── requirements.txt           # Python dependencies
-├── problem_statement.md       # Challenge and domain context
-└── INTERVIEW_PREP.md          # Project discussion notes
+│   ├── main.py              # Application entry point
+│   ├── data.py              # Data loading and preparation
+│   ├── income.py            # Income analysis
+│   ├── recurring.py         # Recurring-expense detection
+│   ├── forecast.py          # Time-based balance projections
+│   ├── decide.py            # Deterministic decision policy
+│   ├── solver.py            # Installment-plan evaluation
+│   ├── extract_images.py    # Receipt-image evidence extraction
+│   ├── extract_messages.py  # Message evidence extraction
+│   ├── validate.py          # Output validation
+│   ├── diagnose.py          # Diagnostics
+│   ├── calibrate.py         # Rule calibration
+│   └── config.py            # Configuration
+├── dataset/                 # Input datasets
+├── evaluation/              # Evaluation assets
+├── output.csv               # Example generated output
+├── requirements.txt         # Dependencies
+└── problem_statement.md     # Domain context
 ```
 
 ## Tech stack
 
-- **Language:** Python
-- **Data processing:** Pandas and CSV-based workflows
-- **Decisioning:** Deterministic financial rules and constraint-based installment evaluation
-- **Forecasting:** Time-based balance projections
-- **Evidence layer:** Receipt-image and message extraction utilities
-- **Quality controls:** Validation, diagnostics, calibration, and evaluation scripts
+| Area | Tools and approach |
+|---|---|
+| Language | Python |
+| Data | CSV-based workflows and transaction analysis |
+| Forecasting | Time-based balance projections |
+| Decisioning | Deterministic financial rules and installment constraints |
+| Evidence | Receipt-image and message extraction utilities |
+| Reliability | Validation, diagnostics, calibration, and evaluation scripts |
 
-## Getting started
-
-### Prerequisites
-
-- Python 3.10+
-- pip
-
-### Installation
+## Quick start
 
 ```bash
 git clone https://github.com/aditya-c7/finance-agentx.git
@@ -98,31 +116,25 @@ cd finance-agentx
 python -m venv .venv
 ```
 
-Activate the virtual environment:
+Activate the environment and install dependencies:
 
 ```bash
 # macOS / Linux
 source .venv/bin/activate
 
 # Windows PowerShell
-.venv\Scripts\Activate.ps1
-```
+# .venv\Scripts\Activate.ps1
 
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-### Run
-
-The implementation lives in the `code/` directory. Run the entry point from the repository root:
+Run the agent from the repository root:
 
 ```bash
 python code/main.py
 ```
 
-Use the datasets and configuration included in the repository. Depending on the input path or workflow you want to evaluate, you can also use the supporting utilities:
+Useful supporting workflows:
 
 ```bash
 python code/validate.py
@@ -130,57 +142,34 @@ python code/diagnose.py
 python code/calibrate.py
 ```
 
-## Decision principles
-
-Finance AgentX is designed around a few safety-oriented principles:
-
-1. **Forecast before deciding.** Current balance alone is not enough; upcoming obligations matter.
-2. **Protect a cash buffer.** A recommendation must preserve the configured safety threshold during the forecast horizon.
-3. **Prefer explainability.** Each action should be traceable to explicit financial evidence and rules.
-4. **Compare alternatives.** If paying in full is unsafe, installment plans are tested before recommending a delay.
-5. **Validate inputs and outputs.** Financial data and recommendation results are checked before they are used.
-
-## Example recommendation
+## Example output
 
 ```text
 Recommendation: Split into installments
 
-Reasoning:
-- A full payment would bring the projected balance below the safety buffer.
-- A monthly installment plan preserves the buffer across the forecast horizon.
-- Expected recurring commitments have been included in the projection.
-
-This is an educational recommendation generated from configured rules and supplied data.
+Why:
+• Paying in full would reduce the projected balance below the safety buffer.
+• The evaluated monthly installment plan preserves the buffer over 90 days.
+• Recurring commitments were included in the forecast.
 ```
 
-## Evaluation
+The graph above is an **illustrative payment-scenario visual** for the README. Actual recommendations are computed from the repository’s supplied inputs, configuration, and policy rules.
 
-The repository includes an `evaluation/` directory and supporting analysis scripts for reviewing decision behavior. Useful scripts include:
+## Evaluation and safeguards
 
-- `explore_samples.py` — inspect representative data examples
-- `explore_deep.py` — deeper exploratory analysis
-- `compare_messages.py` — compare extracted message evidence
-- `calibrate.py` — calibrate decision rules
-- `diagnose.py` — investigate system behavior and anomalies
-- `validate.py` — validate outputs and decision constraints
+The project includes an `evaluation/` directory and utilities for inspecting data, calibrating rules, comparing extracted message evidence, diagnosing unexpected behavior, and validating final outputs.
 
-## Limitations
+- Results depend on the completeness and accuracy of the financial data provided.
+- Forecasts estimate future income and expenses; unexpected events are not guaranteed to be captured.
+- The project does not connect to banks, execute payments, or make regulated credit decisions.
+- Extracted content should be reviewed before it is used in any real financial workflow.
 
-- Forecast quality depends on the completeness and accuracy of supplied historical data.
-- Financial patterns can change unexpectedly; future income and expenses are estimates.
-- The project does not connect to banks, execute payments, provide credit decisions, or offer regulated financial advice.
-- Any extracted receipt or message evidence should be reviewed before it is used in a real financial workflow.
+## Repository notes
 
-## Future improvements
+See [problem_statement.md](problem_statement.md) for the domain context and [INTERVIEW_PREP.md](INTERVIEW_PREP.md) for implementation discussion notes.
 
-- Interactive dashboard for purchase scenarios and forecast visualisation
-- Configurable financial goals and user-specific risk tolerance
-- Additional evaluation datasets and automated regression tests
-- Privacy-preserving local-first data ingestion
-- Richer explanation reports and forecast charts
+---
 
-## Author
-
-Built by [Aditya C](https://github.com/aditya-c7).
-
-If this project is useful or interesting, consider starring the repository.
+<div align="center">
+Built by <a href="https://github.com/aditya-c7">Aditya C</a> · If you found this project useful, consider starring the repository.
+</div>
